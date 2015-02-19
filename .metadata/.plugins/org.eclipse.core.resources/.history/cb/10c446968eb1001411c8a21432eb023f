@@ -1,0 +1,40 @@
+package com.example.adapter;
+
+import com.example.fragment.CurrentWeatherFragment;
+import com.example.model.CityLab;
+import com.example.simpleweatherapp.MainWeatherActivity;
+
+import android.content.Context;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.util.Log;
+
+public class CityListPagerAdapter extends FragmentStatePagerAdapter {
+	
+	private Context mContext;
+	
+	public CityListPagerAdapter(FragmentManager fm, Context ctx) {
+		super(fm);
+		mContext = ctx;
+	}
+	
+	@Override
+	public int getCount() {
+		Log.d("Vivek", "CityListPagerAdapter: getCount: " + CityLab.getInstance(mContext).getCityList().size());
+		return CityLab.getInstance(mContext).getCityList().size();
+	}
+	
+	public int getItemPosition(Object object) {
+	    return POSITION_NONE;
+	}
+	
+	@Override
+	public Fragment getItem(int position) {
+        String city_name = CityLab.getInstance(mContext).getCityList().get(position);
+        Log.d("Vivek", "CityListPagerAdapter: getItem: " + city_name);
+		return new CurrentWeatherFragment(city_name);
+     }
+
+}

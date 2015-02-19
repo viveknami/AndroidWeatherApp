@@ -1,0 +1,302 @@
+package com.example.displaycontroller.controller;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
+import com.example.datacontroller.controller.WeatherDataController;
+import com.example.displaycontroller.model.CityLab;
+import com.example.displaycontroller.model.WeatherData;
+
+import com.example.simpleweatherapp.R;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class CurrentWeatherFragment extends Fragment {
+
+	private TextView city;
+	private TextView temp;
+	private TextView condition;
+	private TextView pressure;
+	private TextView humidity;
+	private TextView lastUpdated;
+	private ImageView weather_icon;
+
+	private WeatherDataController weatherClient;
+	private String cityName;
+	private ProgressDialog mDialog;
+	private FragmentStatePagerAdapter pagerAdp;
+	private WeatherUpdateReceiver mReceiver;
+	private WeatherData mData;
+
+	public CurrentWeatherFragment(String city,
+			FragmentStatePagerAdapter pagerAdp) {
+		cityName = city;
+		this.pagerAdp = pagerAdp;
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setRetainInstance(true);
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		View rootView = inflater.inflate(R.layout.new_current_weather,
+				container, false);
+		city = (TextView) rootView.findViewById(R.id.city);
+		temp = (TextView) rootView.findViewById(R.id.temp);
+		condition = (TextView) rootView.findViewById(R.id.condition);
+		pressure = (TextView) rootView.findViewById(R.id.pressure);
+		humidity = (TextView) rootView.findViewById(R.id.humidity);
+		lastUpdated = (TextView) rootView.findViewById(R.id.lastUpdate);
+		weather_icon = (ImageView) rootView.findViewById(R.id.weather_icon);
+		return rootView;
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		weatherClient = WeatherDataController.getInstance(getActivity()
+				.getApplicationContext());
+		
+		IntentFilter filter = new IntentFilter(WeatherDataController.WEATHER_UPDATE_EVENT);  
+		mReceiver = new WeatherUpdateReceiver();  
+	        getActivity().registerReceiver(mReceiver, filter);
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		  
+		refreshForecast();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		if (mDialog != null) {
+			mDialog.dismiss();
+		}
+	}
+
+	@Override
+	public void onDestroy() {
+		getActivity().unregisterReceiver(mReceiver); 
+		super.onDestroy();
+	}
+
+	private void refreshForecast() {
+		// Update forecast
+
+		WeatherData data = weatherClient.getWeatherData(cityName,
+				new WeatherDataController.CurrentWeatherEventListener() {
+
+					@Override
+					public void onWeatherRetrieved(WeatherData data) {
+
+						if (getActivity() != null) {
+
+							updateViewField(data);
+							if (mDialog != null) {
+								mDialog.dismiss();
+							}
+						}
+
+					}
+
+					@Override
+					public void onWeatherError(final String errorStr) {
+						Log.d("Vivek", "getWeatherData failed");
+						Log.d("Vivek", "city name " + cityName);
+						Log.d("Vivek", "error is " + errorStr);
+
+						if (getActivity() != null) {
+
+							// Must be a bad city name hence remove from
+							// city list
+							if (mDialog != null) {
+								mDialog.dismiss();
+							}
+							Toast.makeText(getActivity(), errorStr,
+									Toast.LENGTH_LONG).show();
+
+							CityLab.getInstance(
+									getActivity().getApplicationContext())
+									.removeCity(cityName);
+
+							pagerAdp.notifyDataSetChanged();
+
+						}
+
+					}
+
+					@Override
+					public void onConnectionError() {
+						Log.d("Vivek", "getWeatherData failed");
+						Log.d("Vivek", "city name " + cityName);
+
+						if (getActivity() != null) {
+							Toast.makeText(
+									getActivity(),
+									getActivity().getString(
+											R.string.place_not_found),
+									Toast.LENGTH_LONG).show();
+							if (mDialog != null) {
+								mDialog.dismiss();
+							}
+						}
+					}
+				});
+
+		if (data != null) {
+			updateViewField(data);
+		} else {
+			mDialog = new ProgressDialog(getActivity());
+			mDialog.setMessage("Loading Weather Data. Please wait...");
+			mDialog.show();
+		}
+
+	}
+
+	private void updateViewField(WeatherData data) {
+
+		mData = data;
+		city.setText(data.location.getCity());
+		temp.setText(data.temperature.getTemp() + " \u2109");
+		condition.setText("Condition: " + data.currentCondition.getWeather());
+		pressure.setText("Pressure: " + data.currentCondition.getPressure());
+		humidity.setText("Humidity: " + data.currentCondition.getHumidity());
+
+		weather_icon.setImageBitmap(data.getIconBitmap());
+
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+
+		// Create a calendar object that will convert the date and time value in
+		// milliseconds to date.
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(Long.parseLong(data.getLastUpdate()));
+
+		lastUpdated.setText(formatter.format(calendar.getTime()));
+	}
+
+	
+
+	private class GetWeatherIcon extends
+			AsyncTask<Void, Void, Boolean> {
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		@Override
+		protected Boolean doInBackground(Void... params) {
+
+			Bitmap bitmap = null;
+			try {
+				bitmap = BitmapFactory.decodeStream((InputStream) new URL(mData.currentCondition.getIconUrl())
+						.getContent());
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+				return false;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			
+			mData.setIconBitmap(bitmap);
+			return true;
+	
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result) {
+			super.onPostExecute(result);
+
+			weather_icon.setImageBitmap(mData.getIconBitmap());
+		}
+	}
+
+	
+	public class WeatherUpdateReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+
+			Log.d("Vivek", "OnReceive WeatherUpdateReceiver is called");
+		
+
+			WeatherData data = (WeatherData) intent.getSerializableExtra("WeatherData");
+			String city_name =  intent.getStringExtra("CityName");
+			Boolean isBadCity = intent.getBooleanExtra("BadCity", false);
+			Boolean isConnectionError = intent.getBooleanExtra("ConnectionError", false);
+			
+			if(!city_name.equals(cityName)) {
+				Log.d("Vivek", "braodcast event for another city: " + city_name);
+				return;
+			} 
+			
+			if (mDialog != null) {
+				mDialog.dismiss();
+			}
+	     
+
+			if (isBadCity) {
+				Log.d("Vivek", "getWeatherData failed: a bad city");
+				Log.d("Vivek", "city name " + cityName);
+
+				if (getActivity() != null) {
+
+					// Must be a bad city name hence remove from
+					// city list
+					Toast.makeText(getActivity(), R.string.bad_city,
+							Toast.LENGTH_LONG).show();
+
+					CityLab.getInstance(getActivity().getApplicationContext())
+							.removeCity(cityName);
+
+					pagerAdp.notifyDataSetChanged();
+
+				}
+			} else if (isConnectionError) {
+				Log.d("Vivek", "getWeatherData failed: a connection error");
+				Log.d("Vivek", "city name " + cityName);
+				
+				Toast.makeText(getActivity(),
+						getActivity().getString(R.string.place_not_found),
+						Toast.LENGTH_LONG).show();
+			} else {
+				if (data != null) {
+					Log.d("Vivek", "updatetWeatherData successsful");
+					Log.d("Vivek", "city name " + cityName);
+					updateViewField(data);
+				}
+
+			}
+
+		}
+
+	}
+}

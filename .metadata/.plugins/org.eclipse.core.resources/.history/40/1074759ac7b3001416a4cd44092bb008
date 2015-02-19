@@ -1,0 +1,17 @@
+package com.example.communication;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+public class WeatherUpdateReceiver extends BroadcastReceiver {
+	
+	public static String WEATHER_UPDATE_RECEIVER = "com.example.weatherUpdateEvent";
+
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		// TODO Auto-generated method stub
+
+	}
+
+}

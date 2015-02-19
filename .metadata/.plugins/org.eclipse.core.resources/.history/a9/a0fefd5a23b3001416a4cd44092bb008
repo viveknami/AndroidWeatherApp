@@ -1,0 +1,5 @@
+package com.example.datacontroller.controller;
+
+public class WeatherHttpClient {
+
+}

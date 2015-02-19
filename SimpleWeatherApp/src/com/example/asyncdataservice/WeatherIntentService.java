@@ -1,0 +1,64 @@
+package com.example.asyncdataservice;
+
+import java.util.ArrayList;
+
+import com.example.datacontroller.controller.WeatherDataController;
+import com.example.datacontroller.controller.WeatherHttpClient;
+import com.example.datacontroller.model.DataBaseHelper;
+import com.example.displaycontroller.controller.CityManagementActivity;
+import com.example.displaycontroller.model.CityLab;
+import com.example.displaycontroller.model.WeatherData;
+
+import android.app.IntentService;
+import android.content.Intent;
+import android.util.Log;
+
+
+/*****************test code *******************************************
+  Add following code to test this intent service to fetch weather data
+
+  Intent intent = new Intent(CityManagementActivity.this, WeatherIntentService.class);
+  intent.putExtra("city_name", city_name);
+  startService(intent); 
+
+ *****************************************************************/
+
+public class WeatherIntentService extends IntentService {
+
+	WeatherHttpClient mHttpClient;
+
+	public  WeatherIntentService() {
+		super("WeatherIntentService");
+	}
+
+	@Override
+	protected void onHandleIntent(Intent intent) {
+
+		ArrayList<String> cityList = CityLab.getInstance(getApplicationContext()).getCityList();
+
+		for(String city: cityList) {
+
+			WeatherHttpClient client = new WeatherHttpClient();
+			WeatherData data = client.remoteWeatherFetch(city);
+
+			if(data != null && data.getErrorString() == null) {
+				// update the data to cache (DB) only if it's a valid data
+				DataBaseHelper.updateWeatherDataToDB(data);
+				
+				//Send weather updated broadcast notification to all listeners
+				WeatherDataController.sendWeatherUpdateBroadcast(data, city, false, false);
+				
+				Log.d("Vivek", "IntentSerice: weather_cond" + data.currentCondition.getWeather());
+			}
+		}
+		
+	}
+
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		Log.d("Vivek", "IntentSerice is destroyed");
+	}
+
+}

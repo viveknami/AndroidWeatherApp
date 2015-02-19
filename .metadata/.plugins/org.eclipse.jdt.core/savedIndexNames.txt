@@ -1,0 +1,5 @@
+INDEX VERSION 1.126+/Users/vagrawal/Documents/myweather_workspace/.metadata/.plugins/org.eclipse.jdt.core
+1419333959.index
+3153131074.index
+1496420248.index
+2208497101.index

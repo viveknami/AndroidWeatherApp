@@ -1,0 +1,159 @@
+package com.example.datacontroller.controller;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.text.format.DateUtils;
+import android.util.Log;
+
+import com.example.datacontroller.model.CurrentWeatherDb;
+import com.example.datacontroller.model.DataBaseHelper;
+import com.example.datacontroller.model.WeatherContentProvider;
+import com.example.displaycontroller.model.WeatherData;
+
+public class WeatherDataController {
+
+	private static boolean ENABLE_BROADCAST_NOTIFCATION = true;
+	
+	public static String WEATHER_UPDATE_EVENT = "com.example.weatherUpdateEvent";
+	private static WeatherDataController sWeatherDataController;
+	private static long WEATHER_UPDATE_INTERVAL = 1000 * 60 * 25;  // 25 mins 
+
+	Handler mHandler;
+	private static Context mContext;
+	WeatherHttpClient mHttpClient;
+	private HashMap<String, Boolean> mCityHashMap;
+
+	private WeatherDataController(Context ctx) {
+		mContext = ctx;
+		mHandler = new Handler();
+		mHttpClient = new WeatherHttpClient();
+		mCityHashMap = new HashMap<String, Boolean>();
+
+	}
+
+	public static WeatherDataController getInstance(Context ctx) {
+		if (sWeatherDataController == null) {
+			sWeatherDataController = new WeatherDataController(ctx);
+		}
+		return sWeatherDataController;
+	}
+
+	public interface CurrentWeatherEventListener {
+		public void onWeatherRetrieved(WeatherData data);
+
+		public void onWeatherError(String errorStr);
+
+		public void onConnectionError();
+	}
+
+
+	public WeatherData getWeatherData(final String location,
+			final CurrentWeatherEventListener listner) {
+
+		WeatherData data = DataBaseHelper.getCachedWeatherFromDB(location);
+		
+		if (data == null) {
+			// First time request
+			Log.d("Vivek", "getWeatherData: first time request");
+			
+			Boolean isAleredyRequested = mCityHashMap.get(location);
+			if (isAleredyRequested != true) {
+				updateWeatherData(location, listner);
+			} 
+			
+		} else {
+			// return cached data
+			long now = System.currentTimeMillis();
+			long cachedTime = Long.parseLong(data.getLastUpdate());
+			long differenceInMinutes = (now - cachedTime) / (1000 * 60);
+
+			if (differenceInMinutes > WEATHER_UPDATE_INTERVAL) {
+				// data has been expired, hence update the data
+				Log.d("Vivek", "getWeatherData: return expired data");
+				data.setIsUpdating(true);
+				Boolean isAleredyRequested = mCityHashMap.get(location);
+				if (isAleredyRequested != true) {
+					updateWeatherData(location, listner);
+				}
+				
+			} else {
+				Log.d("Vivek", "getWeatherData: return non-expired data");
+				data.setIsUpdating(false);
+			}
+		}
+
+		return data;
+	}
+
+	public void updateWeatherData(final String location,
+			final CurrentWeatherEventListener listner) {
+
+		new Thread() {
+			public void run() {
+				mCityHashMap.put(location, true);
+				final WeatherData data = mHttpClient
+						.remoteWeatherFetch(location);
+
+				mCityHashMap.put(location, false);
+				
+				if(data != null && data.getErrorString() == null) {
+					// update the data to cache (DB) only if it's a valid data
+					DataBaseHelper.updateWeatherDataToDB(data);
+				}
+				
+				//Send weather update broadcast notification
+				if(ENABLE_BROADCAST_NOTIFCATION) {
+					if (data == null) {
+						sendWeatherUpdateBroadcast(null, location, false, true);
+					} else if (data.getErrorString() != null) {
+						sendWeatherUpdateBroadcast(null, location, true, false);
+					} else {
+						sendWeatherUpdateBroadcast(data, location, false, false);
+					}
+				} else {
+					//Otherwise use interface to update the listener
+					mHandler.post(new Runnable() {
+						public void run() {
+							if (data == null) {
+								listner.onConnectionError();
+							} else if (data.getErrorString() != null) {
+								listner.onWeatherError(data.getErrorString());
+							} else {
+								listner.onWeatherRetrieved(data);
+							}
+						}
+					});
+				}
+              
+			}
+		}.start();
+	}
+
+
+	public static void sendWeatherUpdateBroadcast(WeatherData data, String city_name, Boolean isBadCity, Boolean isConnectionError) {  
+	    Intent intent = new Intent(WEATHER_UPDATE_EVENT);  
+	    intent.putExtra("CityName", city_name);
+	    intent.putExtra("BadCity", isBadCity);
+	    intent.putExtra("ConnectionError", isConnectionError);
+	    intent.putExtra("WeatherData", data);
+	    mContext.sendBroadcast(intent);  
+	} 
+	
+}

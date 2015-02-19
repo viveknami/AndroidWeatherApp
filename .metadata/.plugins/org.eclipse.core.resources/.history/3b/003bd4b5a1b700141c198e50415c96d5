@@ -1,0 +1,113 @@
+package com.example.asyncdataservice;
+
+import com.example.datacontroller.controller.WeatherDataController;
+import com.example.datacontroller.controller.WeatherHttpClient;
+import com.example.displaycontroller.model.WeatherData;
+
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Binder;
+import android.os.IBinder;
+import android.util.Log;
+
+/*****************test code *******************************************
+This is an indefinitely running service. OS may kill this if resource need arise.
+However if we want explicitly to stop it we can call "stopservice()" from outside 
+or call "stopSelf()" from inside. 
+
+We can start this service from outside using this code:
+
+Intent intent = new Intent(CityManagementActivity.this, WeatherNonStopService.class);
+intent.putExtra("city_name", city_name);
+startService(intent); 
+
+
+Also if some activity wants to bound to this service to get the latest data (getWeatheData) then
+it can be done via following code:
+
+
+a)
+Intent intent= new Intent(this, WeatherNonStopService.class);  // call this at onResume()
+bindService(intent, mConnection,Context.BIND_AUTO_CREATE);
+
+b)
+private ServiceConnection mConnection = new ServiceConnection() {
+
+	    public void onServiceConnected(ComponentName className, 
+	        IBinder binder) {
+	      WeatherNonStopService.MyBinder b = (WeatherNonStopService.MyBinder) binder;
+	      weatherService = b.getService();
+	      
+	    }
+
+	    public void onServiceDisconnected(ComponentName className) {
+	    	weatherService = null;
+	    }
+	 };
+ 
+ c)
+ unbindService(mConnection);  // Call this as onPause()
+ 
+*****************************************************************/
+
+public class WeatherNonStopService extends Service {
+
+	private final IBinder mBinder = new MyBinder();
+	private WeatherData data;
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+
+		String cityName = intent.getStringExtra("city_name");
+		fetchWeatherData(cityName);
+
+		return Service.START_NOT_STICKY;
+	}
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		
+		String cityName = intent.getStringExtra("city_name");
+		fetchWeatherData(cityName);
+
+		return mBinder;
+	}
+
+	public class MyBinder extends Binder {
+		public WeatherNonStopService getService() {
+			return WeatherNonStopService.this;
+		}
+	}
+
+	private void fetchWeatherData(final String city_name)
+	{
+		//Service by default run on main thread (except IntentService) 
+		//hence we should fetch on secondary thread..
+		
+		new Thread() {
+			public void run() {
+	
+				//Fetch data,and once it's done 
+				//we can update to database (if any)
+				WeatherHttpClient client = new WeatherHttpClient();
+				WeatherData data = client.remoteWeatherFetch(city_name);
+								
+				Log.d("Vivek", "NonStopService: weather_cond" + data.currentCondition.getWeather());
+			}
+		}.start();
+
+	}
+
+	public WeatherData getWeatheData()  {
+		return data;
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		Log.d("Vivek", "WeatherNonStopService is destroyed");
+	}
+}

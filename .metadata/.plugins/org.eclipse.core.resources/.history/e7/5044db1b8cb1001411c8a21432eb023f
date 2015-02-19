@@ -1,0 +1,88 @@
+package com.example.adapter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.model.CityLab;
+import com.example.simpleweatherapp.MainWeatherActivity;
+import com.example.simpleweatherapp.R;
+
+import android.app.Activity;
+import android.content.Context;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.TextView;
+
+public class CityListAdapter extends ArrayAdapter<String> {
+
+	private List<String> cityList;
+	private Activity activity;
+
+	public CityListAdapter(List<String> cities, Activity activity) {
+		super(activity, R.layout.city_listview_item, cities);
+		this.cityList = cities;
+		this.activity = activity;
+	}
+
+	@Override
+	public int getCount() {
+		return cityList.size();
+	}
+
+	@Override
+	public View getView(final int position, View convertView, ViewGroup parent) {
+		if (convertView == null) {
+			LayoutInflater inflater = (LayoutInflater) activity
+					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			convertView = inflater.inflate(R.layout.city_listview_item, parent,
+					false);
+		}
+
+		// TODO: We should apply view holder pattern
+
+		TextView cityName = (TextView) convertView.findViewById(R.id.cityName);
+		CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.checkbox1);
+
+		cityName.setText((String) getItem(position));
+		checkBox.setChecked(true);
+
+		convertView.setOnClickListener(new TextView.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Log.d("Vivek", "City row is clicked");
+				CityLab.getInstance(activity.getApplicationContext()).setLastCity(cityList.get(position));
+			    activity.finish();	
+			}
+		});
+
+		checkBox.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+
+				String city_name = cityList.get(position);				
+				String lastCity = CityLab.getInstance(activity.getApplicationContext()).getLastCity();
+				if (lastCity.equals(city_name)) {
+					cityList.remove(position);
+					CityLab.getInstance(activity.getApplicationContext()).setLastCity(cityList.get(0));
+				} else {
+					cityList.remove(position);
+				}
+
+				CityLab.getInstance(activity.getApplicationContext()).removeCity(city_name);
+
+				// TODO: remove from original saved city list in
+				// shared prefences too..
+
+				notifyDataSetChanged();
+
+			}
+		});
+
+		return convertView;
+	}
+
+}

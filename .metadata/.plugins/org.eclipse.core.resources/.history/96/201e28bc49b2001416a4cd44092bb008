@@ -1,0 +1,26 @@
+package com.example.weatherservice;
+
+import com.example.model.WeatherData;
+import com.example.remoteclient.WeatherClient;
+
+import android.app.IntentService;
+import android.content.Intent;
+
+public class WeatherIntentService extends IntentService {
+
+	
+	public  WeatherIntentService() {
+		super("WeatherIntentService");
+	}
+	
+	@Override
+	protected void onHandleIntent(Intent intent) {
+		
+		String cityName = intent.getStringExtra("city_name");
+		WeatherClient client = new WeatherClient();
+		WeatherData data = client. remoteWeatherFetch(cityName);
+		
+        
+	}
+
+}

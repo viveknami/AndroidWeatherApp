@@ -1,0 +1,37 @@
+1423525997571	Rename package 'com.example.httpclient'
+1423530126988	Rename compilation unit 'MainActivity.java'
+1423586665736	Move compilation unit
+1423586854478	Rename compilation unit 'CityManagementFragment.java'
+1423592892613	Delete element
+1423595493714	Delete element
+1423597807734	Rename type 'CityData'
+1423710399623	Rename type 'WeatherBoundedService'
+1423789994176	Delete element
+1423790131127	Rename package 'com.example.datacontroller.controller'
+1423790203437	Rename package 'com.example.datacontroller.controller'
+1423790309547	Rename package 'com.example.displaycontroller.model'
+1423790452902	Move compilation unit
+1423790467284	Move compilation unit
+1423790489555	Move compilation unit
+1423790503212	Move compilation unit
+1423790513171	Delete element
+1423790517508	Delete element
+1423790547509	Move compilation unit
+1423790554322	Delete element
+1423790628200	Move compilation unit
+1423790649061	Move compilation unit
+1423790655544	Delete element
+1423790691505	Move compilation unit
+1423790700177	Move compilation unit
+1423790723434	Move compilation unit
+1423790794691	Move compilation unit
+1423790802257	Move compilation unit
+1423790812129	Move compilation unit
+1423790817668	Delete element
+1423790821955	Delete element
+1423792385047	Rename type 'WeatherClient'
+1423863059926	Delete element
+1423863063959	Delete element
+1423870278534	Move compilation unit
+1423870288645	Move compilation unit
+1423870312767	Move compilation unit

@@ -1,0 +1,166 @@
+package com.example.fragment;
+
+
+import com.example.displaycontroller.model.CityLab;
+import com.example.displaycontroller.model.WeatherData;
+import com.example.remoteclient.WeatherClient;
+
+import com.example.simpleweatherapp.R;
+import android.app.ProgressDialog;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class CurrentWeatherFragment extends Fragment {
+
+	private TextView city;
+	private TextView temp;
+	private TextView condition;
+	private TextView pressure;
+	private TextView humidity;
+	private TextView lastUpdated;
+	private ImageView weather_icon;
+
+	private WeatherClient weatherClient;
+	private String cityName;
+	private ProgressDialog mDialog;
+	private FragmentStatePagerAdapter pagerAdp;
+
+	public CurrentWeatherFragment(String city, FragmentStatePagerAdapter pagerAdp) {
+		cityName = city;
+		this.pagerAdp = pagerAdp;
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setRetainInstance(true);
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		View rootView = inflater.inflate(R.layout.new_current_weather,
+				container, false);
+		city = (TextView) rootView.findViewById(R.id.city);
+		temp = (TextView) rootView.findViewById(R.id.temp);
+		condition = (TextView) rootView.findViewById(R.id.condition);
+		pressure = (TextView) rootView.findViewById(R.id.pressure);
+		humidity = (TextView) rootView.findViewById(R.id.humidity);
+		lastUpdated = (TextView) rootView.findViewById(R.id.lastUpdate);
+		weather_icon = (ImageView) rootView.findViewById(R.id.weather_icon);
+
+		return rootView;
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		weatherClient = new WeatherClient(true);
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		refreshForecast();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		if (mDialog != null) {
+			mDialog.dismiss();
+		}
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+	}
+
+	private void refreshForecast() {
+		// Update forecast
+
+		mDialog = new ProgressDialog(getActivity());
+		mDialog.setMessage("Loading Weather Data. Please wait...");
+		mDialog.show();
+
+		weatherClient.getWeatherData(cityName,
+				new WeatherClient.CurrentWeatherEventListener() {
+
+					@Override
+					public void onWeatherRetrieved(WeatherData data) {
+
+						if (getActivity() != null) {
+							city.setText(data.location.getCity() + " "
+									+ data.location.getCountry());
+							temp.setText(data.temperature.getTemp() + " \u2109");
+							condition.setText("Condition: "
+									+ data.currentCondition.getWeather());
+							pressure.setText("Pressure: "
+									+ data.currentCondition.getPressure());
+							humidity.setText("Humidity: "
+									+ data.currentCondition.getHumidity());
+							lastUpdated.setText(data.getLastUpdate());
+
+							weather_icon.setImageBitmap(data.getIconBitmap());
+
+							mDialog.dismiss();
+						}
+
+					}
+
+					@Override
+					public void onWeatherError(final String errorStr) {
+						Log.d("Vivek", "getWeatherData failed");
+						Log.d("Vivek", "city name " + cityName);
+						Log.d("Vivek", "error is " + errorStr);
+
+						if (getActivity() != null) {
+
+							// Must be a bad city name hence remove from
+							// city list
+							mDialog.dismiss();
+							Toast.makeText(getActivity(), errorStr,
+									Toast.LENGTH_LONG).show();
+							
+							CityLab.getInstance(
+									getActivity().getApplicationContext())
+									.removeCity(cityName);
+							
+							pagerAdp.notifyDataSetChanged();
+							
+							
+							
+
+						}
+
+					}
+
+					@Override
+					public void onConnectionError() {
+						Log.d("Vivek", "getWeatherData failed");
+						Log.d("Vivek", "city name " + cityName);
+
+						if (getActivity() != null) {
+							Toast.makeText(
+									getActivity(),
+									getActivity().getString(
+											R.string.place_not_found),
+									Toast.LENGTH_LONG).show();
+							mDialog.dismiss();
+						}
+					}
+				});
+
+	}
+
+}

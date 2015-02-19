@@ -1,0 +1,178 @@
+package com.example.datacontroller.model;
+
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.content.UriMatcher;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
+import android.net.Uri;
+import android.text.TextUtils;
+
+public class WeatherContentProvider extends ContentProvider {
+
+	private DataBaseHelper dbHelper;
+	
+	private static final int ALL_CURRWEATHER_CITIES = 1;
+	private static final int SINGLE_CURRWEATHER_CITY = 2;
+
+	private static final String AUTHORITY = "com.example.weather.contentprovider";
+
+	public static final Uri CONTENT_FORECAST_URI = Uri.parse("content://" + AUTHORITY
+			+ "/forecast_cities");
+	
+	public static final Uri CONTENT_CURRWEATHER_URI = Uri.parse("content://" + AUTHORITY
+			+ "/currweather_cities");
+
+	private static final UriMatcher uriMatcher;
+	static {
+		uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+		uriMatcher.addURI(AUTHORITY, "currweather_cities", ALL_CURRWEATHER_CITIES);
+		uriMatcher.addURI(AUTHORITY, "currweather_cities/#", SINGLE_CURRWEATHER_CITY);
+		
+	}
+
+	// system calls onCreate() when it starts up the provider.
+	@Override
+	public boolean onCreate() {
+		// get access to the database helper
+		dbHelper = new DataBaseHelper(getContext());
+		return false;
+	}
+
+	// Return the MIME type corresponding to a content URI
+	@Override
+	public String getType(Uri uri) {
+
+		switch (uriMatcher.match(uri)) {
+		
+		case ALL_CURRWEATHER_CITIES:
+			return "vnd.android.cursor.dir/vnd.com.example.contentprovider.currweather_cities";
+		case SINGLE_CURRWEATHER_CITY:
+			return "vnd.android.cursor.item/vnd.com.example.contentprovider.currweather_cities";
+		default:
+			throw new IllegalArgumentException("Unsupported URI: " + uri);
+		}
+	}
+
+	
+	@Override
+	public Uri insert(Uri uri, ContentValues values) {
+
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+		long id;
+		switch (uriMatcher.match(uri)) {
+			
+		case ALL_CURRWEATHER_CITIES:
+			//Using insertWithOnConflict with conflict method "CONFLICT_REPLACE" so that if there is 
+			//a conflict addition for same city then conflicting data is replaced with latest one
+			
+			id = db.insertWithOnConflict(CurrentWeatherDb.CURRENT_WEATHER_TABLE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+			getContext().getContentResolver().notifyChange(uri, null);
+			return Uri.parse(CONTENT_CURRWEATHER_URI + "/" + id);
+			
+		default:
+			throw new IllegalArgumentException("Unsupported URI: " + uri);
+		}
+		
+		
+	}
+
+	@Override
+	public Cursor query(Uri uri, String[] projection, String selection,
+			String[] selectionArgs, String sortOrder) {
+
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+		SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+		String id;
+
+		switch (uriMatcher.match(uri)) {
+		
+		case ALL_CURRWEATHER_CITIES:
+			queryBuilder.setTables(CurrentWeatherDb.CURRENT_WEATHER_TABLE);
+			break;
+		case SINGLE_CURRWEATHER_CITY:
+			id = uri.getPathSegments().get(1);
+			queryBuilder.appendWhere(CurrentWeatherDb.KEY_ROWID + "=" + id);
+			break;		
+		default:
+			throw new IllegalArgumentException("Unsupported URI: " + uri);
+		}
+
+		Cursor cursor = queryBuilder.query(db, projection, selection,
+				selectionArgs, null, null, sortOrder);
+		return cursor;
+
+	}
+
+	
+	@Override
+	public int delete(Uri uri, String selection, String[] selectionArgs) {
+
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+		String id;
+		
+		switch (uriMatcher.match(uri)) {
+	
+		case ALL_CURRWEATHER_CITIES:
+			// do nothing
+			break;
+		
+		case SINGLE_CURRWEATHER_CITY:
+			id = uri.getPathSegments().get(1);
+			selection = CurrentWeatherDb.KEY_ROWID
+					+ "="
+					+ id
+					+ (!TextUtils.isEmpty(selection) ? " AND (" + selection
+							+ ')' : "");
+			break;
+		default:
+			throw new IllegalArgumentException("Unsupported URI: " + uri);
+		}
+		
+		int deleteCount;
+		
+		
+		deleteCount = db.delete(CurrentWeatherDb.CURRENT_WEATHER_TABLE, selection,
+					selectionArgs);	
+		
+		getContext().getContentResolver().notifyChange(uri, null);
+		return deleteCount;
+	}
+
+
+	@Override
+	public int update(Uri uri, ContentValues values, String selection,
+			String[] selectionArgs) {
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+		String id;
+		
+		switch (uriMatcher.match(uri)) {
+		
+		case ALL_CURRWEATHER_CITIES:
+			// do nothing
+			break;
+		case SINGLE_CURRWEATHER_CITY:
+			isForcastTable = true;
+			id = uri.getPathSegments().get(1);
+			selection = CurrentWeatherDb.KEY_ROWID
+					+ "="
+					+ id
+					+ (!TextUtils.isEmpty(selection) ? " AND (" + selection
+							+ ')' : "");
+			break;
+			
+		default:
+			throw new IllegalArgumentException("Unsupported URI: " + uri);
+		}
+		
+		int updateCount;
+		
+	    updateCount = db.update(CurrentWeatherDb.CURRENT_WEATHER_TABLE, values,
+					selection, selectionArgs);
+	
+		getContext().getContentResolver().notifyChange(uri, null);
+		return updateCount;
+	}
+
+}

@@ -1,0 +1,209 @@
+package com.example.datacontroller.controller;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.text.format.DateUtils;
+import android.util.Log;
+
+import com.example.datacontroller.model.CurrentWeatherDb;
+import com.example.datacontroller.model.WeatherContentProvider;
+import com.example.displaycontroller.model.WeatherData;
+
+public class WeatherDataController {
+
+	private static WeatherDataController sWeatherDataController;
+
+	Handler mHandler;
+	private Context mContext;
+	private CurrentWeatherEventListener mCurrentWeatherListner;
+	WeatherHttpClient mHttpClient;
+	private HashMap<String, String> mCityHashMap;
+
+	private WeatherDataController(Context ctx) {
+		mContext = ctx;
+		mHandler = new Handler();
+		mHttpClient = new WeatherHttpClient();
+		mCityHashMap = new HashMap<String, String>();
+
+	}
+
+	public static WeatherDataController getInstance(Context ctx) {
+		if (sWeatherDataController == null) {
+			sWeatherDataController = new WeatherDataController(ctx);
+		}
+		return sWeatherDataController;
+	}
+
+	public interface CurrentWeatherEventListener {
+		public void onWeatherRetrieved(WeatherData data);
+
+		public void onWeatherError(String errorStr);
+
+		public void onConnectionError();
+	}
+
+	public void setCurrentWeatherListner(CurrentWeatherEventListener listner) {
+
+		mCurrentWeatherListner = listner;
+	}
+
+	public WeatherData getWeatherData(final String location,
+			final CurrentWeatherEventListener listner) {
+
+		WeatherData data = getCachedWeatherData(location);
+
+		if (data == null) {
+			// First time request
+			Log.d("Vivek", "getWeatherData: first time request");
+
+			String isAleredyRequested = mCityHashMap.get(location);
+			if (isAleredyRequested == null
+					|| !isAleredyRequested.equals("true")) {
+				updateWeatherData(location, listner);
+			}
+		} else {
+			// return cached data
+			long now = System.currentTimeMillis();
+			long cachedTime = Long.parseLong(data.getLastUpdate());
+			double differenceInMinutes = (double) ((now - cachedTime) / (1000.0 * 60.0));
+
+			Log.d("Vivek", "Cached time: " + cachedTime);
+			Log.d("Vivek", "Cached time: " + now);
+
+			Log.d("Vivek", "differenceInMinutes: " + differenceInMinutes);
+			if (differenceInMinutes > 1.0) {
+				// data has been expired, hence update the data
+				Log.d("Vivek", "getWeatherData: return expired data");
+				data.setIsUpdating(true);
+				String isAleredyRequested = mCityHashMap.get(location);
+				if (isAleredyRequested == null
+						|| !isAleredyRequested.equals("true")) {
+					updateWeatherData(location, listner);
+				}
+			} else {
+				Log.d("Vivek", "getWeatherData: return non-expired data");
+				data.setIsUpdating(false);
+			}
+		}
+
+		return data;
+	}
+
+	public void updateWeatherData(final String location,
+			final CurrentWeatherEventListener listner) {
+
+		new Thread() {
+			public void run() {
+				mCityHashMap.put(location, "true");
+				final WeatherData data = mHttpClient
+						.remoteWeatherFetch(location);
+
+				// update the data to cache (DB)
+				updateWeatherDataToCache(data);
+
+				// Notify to listener
+				mHandler.post(new Runnable() {
+					public void run() {
+						mCityHashMap.put(location, "false");
+						if (data == null) {
+							listner.onConnectionError();
+						} else if (data.getErrorString() != null) {
+							listner.onWeatherError(data.getErrorString());
+						} else {
+							listner.onWeatherRetrieved(data);
+						}
+					}
+				});
+			}
+		}.start();
+	}
+
+	private Bitmap getWeatherIcon(String url) {
+
+		Bitmap bitmap = null;
+		try {
+			bitmap = BitmapFactory.decodeStream((InputStream) new URL(url)
+					.getContent());
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return bitmap;
+	}
+
+	private WeatherData getCachedWeatherData(String location) {
+
+		WeatherData data = null;
+		// Query content provider:
+		String mSelectionClause = CurrentWeatherDb.KEY_CITY_ZIPCODE + " = ?";
+
+		// Moves the user's input string to the selection arguments.
+		String[] mSelectionArgs = { "" };
+		mSelectionArgs[0] = location;
+
+		Cursor c = mContext.getContentResolver().query(
+				WeatherContentProvider.CONTENT_CURRWEATHER_URI, null,
+				mSelectionClause, mSelectionArgs, "");
+		if (!c.moveToFirst()) {
+			Log.d("Vivek", "Nothing in content provider");
+		} else {
+			data = new WeatherData();
+			data.location.setCity(c.getString(c
+					.getColumnIndex(CurrentWeatherDb.KEY_CITY_NAME)));
+			data.temperature.setTemp(c.getString(c
+					.getColumnIndex(CurrentWeatherDb.KEY_TEMP)));
+			data.currentCondition.setWeather(c.getString(c
+					.getColumnIndex(CurrentWeatherDb.KEY_COND)));
+			data.currentCondition.setPressure(c.getString(c
+					.getColumnIndex(CurrentWeatherDb.KEY_PRESSURE)));
+			data.currentCondition.setHumidity(c.getString(c
+					.getColumnIndex(CurrentWeatherDb.KEY_HUMIDITY)));
+			data.currentCondition.setIconUrl(c.getString(c
+					.getColumnIndex(CurrentWeatherDb.KEY_ICON_URL)));
+			data.setLastUpdate(c.getString(c
+					.getColumnIndex(CurrentWeatherDb.KEY_LAST_UPDATED_TIME)));
+		}
+
+		return data;
+	}
+
+	private void updateWeatherDataToCache(WeatherData data) {
+
+		ContentValues values = new ContentValues();
+		values.put(CurrentWeatherDb.KEY_CITY_ZIPCODE,
+				data.location.getCityZipcode());
+		values.put(CurrentWeatherDb.KEY_CITY_NAME, data.location.getCity());
+		values.put(CurrentWeatherDb.KEY_TEMP, data.temperature.getTemp());
+		values.put(CurrentWeatherDb.KEY_COND,
+				data.currentCondition.getWeather());
+		values.put(CurrentWeatherDb.KEY_PRESSURE,
+				data.currentCondition.getPressure());
+		values.put(CurrentWeatherDb.KEY_HUMIDITY,
+				data.currentCondition.getHumidity());
+		values.put(CurrentWeatherDb.KEY_ICON_URL,
+				data.currentCondition.getIconUrl());
+		values.put(CurrentWeatherDb.KEY_LAST_UPDATED_TIME, data.getLastUpdate());
+
+		mContext.getContentResolver().insert(
+				WeatherContentProvider.CONTENT_CURRWEATHER_URI, values);
+	}
+
+}

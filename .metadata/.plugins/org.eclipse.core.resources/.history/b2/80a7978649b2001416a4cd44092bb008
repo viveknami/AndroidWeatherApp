@@ -1,0 +1,18 @@
+package com.example.weatherservice;
+
+import android.app.IntentService;
+import android.content.Intent;
+
+public class WeatherIntentService extends IntentService {
+
+	
+	public  WeatherIntentService() {
+		super("WeatherIntentService");
+	}
+	@Override
+	protected void onHandleIntent(Intent intent) {
+		// TODO Auto-generated method stub
+
+	}
+
+}
