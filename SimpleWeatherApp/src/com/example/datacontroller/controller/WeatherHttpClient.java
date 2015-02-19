@@ -12,7 +12,7 @@ import com.example.displaycontroller.model.WeatherData;
 
 public class WeatherHttpClient {
 
-	static String BASE_URL = "http://api.wunderground.com/api/016b53ccf7098d9d/conditions/q/";
+	static String BASE_URL = "http://api.wunderground.com/api/YOUR_API_KEY/conditions/q/";
 
 	public WeatherData remoteWeatherFetch(String location) {
 		HttpURLConnection con = null;

@@ -14,7 +14,7 @@ This is an indefinitely running service. OS may kill this if resource need arise
 However if we want explicitly to stop it we can call "stopservice()" from outside 
 or call "stopSelf()" from inside. 
 
-We can start this service from outside using this code:
+We can start this service from outside using following code:
 
 Intent intent = new Intent(CityManagementActivity.this, WeatherNonStopService.class);
 intent.putExtra("city_name", city_name);

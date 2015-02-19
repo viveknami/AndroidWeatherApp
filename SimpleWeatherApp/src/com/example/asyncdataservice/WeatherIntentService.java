@@ -15,7 +15,7 @@ import android.util.Log;
 
 
 /*****************test code *******************************************
-  Add following code to test this intent service to fetch weather data
+  We can start this service from outside using following code:
 
   Intent intent = new Intent(CityManagementActivity.this, WeatherIntentService.class);
   intent.putExtra("city_name", city_name);

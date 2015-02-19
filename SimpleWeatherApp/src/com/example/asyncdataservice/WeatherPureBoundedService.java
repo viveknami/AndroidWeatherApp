@@ -18,7 +18,7 @@ import android.util.Log;
 This is a pure bounded service. This is started when "bindService" is called and 
 destroyed when "unbind" is called..
 
-We can start this service from outside using this code:
+We can start this service from outside using following code:
 
 Intent intent= new Intent(this, WeatherNonStopService.class);  // call this at onResume()
 intent.putExtra("city_name", city_name);
@@ -41,7 +41,7 @@ private ServiceConnection mConnection = new ServiceConnection() {
 	 };
  
 
-Also we should "unbind()" this bounded service 
+Also we should "unbind()" once we are done:
  
  unbindService(mConnection);  // Call this as onPause()
  
