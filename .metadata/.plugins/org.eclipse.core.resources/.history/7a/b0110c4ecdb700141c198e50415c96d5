@@ -32,12 +32,12 @@ public class CurrentWeatherDb {
 					" UNIQUE (" + KEY_CITY_ZIPCODE +"));";
 
 	public static void onCreate(SQLiteDatabase db) {
-		Log.d("SimpleWeatherApp", CURRENT_WEATHER_DATABASE_CREATE);
+		Log.d("Vivek", CURRENT_WEATHER_DATABASE_CREATE);
 		db.execSQL(CURRENT_WEATHER_DATABASE_CREATE);
 	}
 
 	public static void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		Log.d("SimpleWeatherApp", "Upgrading database from version " + oldVersion + " to "
+		Log.d("Vivek", "Upgrading database from version " + oldVersion + " to "
 				+ newVersion + ", which will destroy all old data");
 		db.execSQL("DROP TABLE IF EXISTS " + CURRENT_WEATHER_TABLE);
 		onCreate(db);

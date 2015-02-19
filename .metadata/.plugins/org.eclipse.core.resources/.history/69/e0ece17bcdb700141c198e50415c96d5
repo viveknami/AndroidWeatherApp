@@ -207,7 +207,7 @@ public class CurrentWeatherFragment extends Fragment {
 		@Override
 		public void onWeatherRetrieved(WeatherData data) {
 
-			Log.d("SimpleWeatherApp", "onWeatherRetrieved: city name " + mCityName);
+			Log.d("Vivek", "onWeatherRetrieved: city name " + mCityName);
 			if (getActivity() != null) {
 
 				updateViewField(data);
@@ -220,7 +220,7 @@ public class CurrentWeatherFragment extends Fragment {
 
 		@Override
 		public void onWeatherError(final String errorStr) {
-			Log.d("SimpleWeatherApp", "onWeatherError: city name " + mCityName);
+			Log.d("Vivek", "onWeatherError: city name " + mCityName);
 
 			if (getActivity() != null) {
 
@@ -243,7 +243,7 @@ public class CurrentWeatherFragment extends Fragment {
 
 		@Override
 		public void onConnectionError() {
-			Log.d("SimpleWeatherApp", "onConnectionError: city name " + mCityName);
+			Log.d("Vivek", "onConnectionError: city name " + mCityName);
 
 			if (getActivity() != null) {
 				Toast.makeText(getActivity(),
@@ -261,7 +261,7 @@ public class CurrentWeatherFragment extends Fragment {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 
-			Log.d("SimpleWeatherApp", "OnReceive WeatherUpdateReceiver is called");
+			Log.d("Vivek", "OnReceive WeatherUpdateReceiver is called");
 
 			WeatherData data = (WeatherData) intent
 					.getSerializableExtra("WeatherData");

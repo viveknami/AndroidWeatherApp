@@ -51,7 +51,7 @@ public class MainWeatherActivity extends FragmentActivity {
 		String lastCity = CityLab.getInstance(getApplicationContext())
 				.getLastCity();
 
-		Log.d("SimpleWeatherApp", "OnResume: last city is: " + lastCity);
+		Log.d("Vivek", "OnResume: last city is: " + lastCity);
 
 		if (lastCity == null) {
 			Intent intent = new Intent(this, CityManagementActivity.class);

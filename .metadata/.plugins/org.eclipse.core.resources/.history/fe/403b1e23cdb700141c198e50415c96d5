@@ -47,7 +47,7 @@ public class WeatherHttpClient {
             data.location.setCityZipcode(location);
 
 		} catch (Exception e) {
-			Log.d("SimpleWeatherApp", "remoteWeatherFetch failed in remote connection");
+			Log.d("Vivek", "remoteWeatherFetch failed in remote connection");
 			e.printStackTrace();
 		} finally {
 			try {

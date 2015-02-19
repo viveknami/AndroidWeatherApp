@@ -104,6 +104,6 @@ public class WeatherNonStopService extends Service {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		Log.d("SimpleWeatherApp", "WeatherNonStopService is destroyed");
+		Log.d("Vivek", "WeatherNonStopService is destroyed");
 	}
 }

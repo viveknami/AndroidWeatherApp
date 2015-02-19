@@ -48,7 +48,7 @@ public class WeatherIntentService extends IntentService {
 				//Send weather updated broadcast notification to all listeners
 				WeatherDataController.sendWeatherUpdateBroadcast(data, city, false, false);
 				
-				Log.d("SimpleWeatherApp", "IntentSerice: weather_cond" + data.currentCondition.getWeather());
+				Log.d("Vivek", "IntentSerice: weather_cond" + data.currentCondition.getWeather());
 			}
 		}
 		
@@ -58,7 +58,7 @@ public class WeatherIntentService extends IntentService {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		Log.d("SimpleWeatherApp", "IntentSerice is destroyed");
+		Log.d("Vivek", "IntentSerice is destroyed");
 	}
 
 }

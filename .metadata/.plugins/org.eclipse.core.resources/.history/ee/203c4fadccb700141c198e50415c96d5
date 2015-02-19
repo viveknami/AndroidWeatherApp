@@ -12,7 +12,7 @@ public class WeatherUpdateAlarmBroadcastReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		
-		 Log.d("SimpleWeatherApp", "WeatherUpdateAlarmBroadcastReceiver OnReceive is called");
+		 Log.d("Vivek", "WeatherUpdateAlarmBroadcastReceiver OnReceive is called");
 		 Intent serviceIntent = new Intent(context, WeatherIntentService.class);
 		 context.startService(serviceIntent); 
 

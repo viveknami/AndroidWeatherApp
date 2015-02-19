@@ -60,10 +60,16 @@ public class CityManagementActivity extends Activity {
 				     builder.show();
 
 				} else {
+					Log.d("Vivek", "new city is: " + city_name);
 								  
 					if (isDuplicateCity(city_name) == false) {
 						mCityList.add(city_name);
 						CityLab.getInstance(getApplicationContext()).addNewCity(city_name);
+						Log.d("Vivek",
+								"new city is: "
+										+ CityLab.getInstance(
+												getApplicationContext())
+												.getLastCity());
 						mAdp.notifyDataSetChanged();
 					}
 

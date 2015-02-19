@@ -77,7 +77,7 @@ public class WeatherPureBoundedService extends Service {
 			public void run() {
 				WeatherHttpClient client = new WeatherHttpClient();
 				WeatherData data = client.remoteWeatherFetch(city_name);
-				Log.d("Vivek", "WeatherPureBoundedService: weather_cond" + data.currentCondition.getWeather());
+				Log.d("SimpleWeatherApp", "WeatherPureBoundedService: weather_cond" + data.currentCondition.getWeather());
 			}
 		}.start();
 
@@ -90,7 +90,7 @@ public class WeatherPureBoundedService extends Service {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		Log.d("Vivek", "WeatherPureBoundedService is destroyed");
+		Log.d("SimpleWeatherApp", "WeatherPureBoundedService is destroyed");
 	}
 }
 

@@ -72,7 +72,7 @@ public class WeatherDataController {
 
 		if (data == null) {
 			// First time request
-			Log.d("SimpleWeatherApp", "getWeatherData: first time request");
+			Log.d("Vivek", "getWeatherData: first time request");
 
 			Boolean isAleredyRequested = mCityHashMap.get(location);
 			if ((isAleredyRequested == null) || isAleredyRequested.booleanValue() != true) {
@@ -87,7 +87,7 @@ public class WeatherDataController {
 
 			if (differenceInMinutes > WEATHER_UPDATE_INTERVAL) {
 				// data has been expired, hence update the data
-				Log.d("SimpleWeatherApp", "getWeatherData: return expired data");
+				Log.d("Vivek", "getWeatherData: return expired data");
 				data.setIsUpdating(true);
 				Boolean isAleredyRequested = mCityHashMap.get(location);
 				if ((isAleredyRequested == null) || isAleredyRequested.booleanValue() != true) {
@@ -95,7 +95,7 @@ public class WeatherDataController {
 				}
 
 			} else {
-				Log.d("SimpleWeatherApp", "getWeatherData: return non-expired data");
+				Log.d("Vivek", "getWeatherData: return non-expired data");
 				data.setIsUpdating(false);
 			}
 		}
@@ -106,7 +106,7 @@ public class WeatherDataController {
 	public void updateWeatherData(final String location,
 			final WeakReference<CurrentWeatherEventListener> listner) {
 
-		Log.d("SimpleWeatherApp", "updateWeatherData is called");
+		Log.d("Vivek", "updateWeatherData is called");
 		
 		new Thread() {
 			public void run() {
@@ -147,7 +147,7 @@ public class WeatherDataController {
 									listnerObj.onWeatherRetrieved(data);
 								}
 							} else {
-								Log.d("SimpleWeatherApp", "Listner has been destroyed");
+								Log.d("Vivek", "Listner has been destroyed");
 							}
 						}
 					});

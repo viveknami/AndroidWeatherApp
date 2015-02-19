@@ -13,7 +13,7 @@ public class WeatherJSONParser {
 		WeatherData weather = new WeatherData();
 
 		try {
-			Log.d("SimpleWeatherApp", "Data [" + data + "]");
+			Log.d("Vivek", "Data [" + data + "]");
 			// We create out JSONObject from the data
 			JSONObject jObj = new JSONObject(data);
 
@@ -30,7 +30,7 @@ public class WeatherJSONParser {
 			if (errorObserObj != null) {
 				
 				weather.setErrorString(errorObserObj.getString("description"));
-				Log.d("SimpleWeatherApp", "error str is: "  + weather.getErrorString());
+				Log.d("Vivek", "error str is: "  + weather.getErrorString());
 				return weather;
 			} else {
 				weather.setErrorString(null);
@@ -79,11 +79,11 @@ public class WeatherJSONParser {
 			weather.setLastUpdate(Long.toString(System.currentTimeMillis()));
 
 		} catch (JSONException e) {
-			Log.d("SimpleWeatherApp", "1: getWeather failed in JSON pasring");
+			Log.d("Vivek", "1: getWeather failed in JSON pasring");
 			e.printStackTrace();
 			return null;
 		} catch (Exception e) {
-			Log.d("SimpleWeatherApp", "2: getWeather failed in JSON pasring");
+			Log.d("Vivek", "2: getWeather failed in JSON pasring");
 			e.printStackTrace();
 			return null;
 		}

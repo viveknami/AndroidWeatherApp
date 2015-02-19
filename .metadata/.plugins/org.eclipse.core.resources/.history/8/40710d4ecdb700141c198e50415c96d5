@@ -22,7 +22,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		Log.d("SimpleWeatherApp", "Create table in database");
+		Log.d("Vivek", "Create table in database");
 		CurrentWeatherDb.onCreate(db);
 	}
 
@@ -68,7 +68,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 				WeatherContentProvider.CONTENT_CURRWEATHER_URI, null,
 				mSelectionClause, mSelectionArgs, "");
 		if (!c.moveToFirst()) {
-			Log.d("SimpleWeatherApp", "Nothing in content provider");
+			Log.d("Vivek", "Nothing in content provider");
 		} else {
 			data = new WeatherData();
 			data.location.setCity(c.getString(c
